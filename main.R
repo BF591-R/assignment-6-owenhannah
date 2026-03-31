@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
-## Author: Taylor Falk
-## tfalk@bu.edu
+## Author: Hannah Owen
+## hlowen@bu.edu
 ## BU BF591
 ## Assignment Week 6
 
@@ -33,7 +33,11 @@ for (package in libs) {
 #'
 #' @examples counts_df <- load_n_trim("/path/to/counts/verse_counts.tsv")
 load_n_trim <- function(filename) {
-    return(NULL)
+  data <- read_tsv(filename) %>%
+    as.data.frame() %>% 
+    select(gene, vP0_1, vP0_2, vAd_1, vAd_2) %>% 
+    column_to_rownames("gene")
+    return(data)
 }
 
 #' Perform a DESeq2 analysis of rna seq data
@@ -57,7 +61,16 @@ load_n_trim <- function(filename) {
 #'
 #' @examples run_deseq(counts_df, coldata, 10, "condition_day4_vs_day7")
 run_deseq <- function(count_dataframe, coldata, count_filter, condition_name) {
-    return(NULL)
+  dds <- DESeqDataSetFromMatrix(countData = count_dataframe,
+                                colData = coldata,
+                                design = ~ condition)
+  
+  keep <- rowSums(counts(dds)) >= count_filter
+  dds <- dds[keep, ]
+  dds <- DESeq(dds)
+  res <- results(dds, name = condition_name)
+  res
+    return(res)
 }
 
 #### edgeR ####
@@ -77,7 +90,15 @@ run_deseq <- function(count_dataframe, coldata, count_filter, condition_name) {
 #'
 #' @examples run_edger(counts_df, group)
 run_edger <- function(count_dataframe, group) {
-    return(NULL)
+  y <- DGEList(counts= count_dataframe, group=group)
+  #y <- normLibSizes(y)
+  keep <- filterByExpr(y, group = group)
+  y <- y[keep, ]
+  y <- estimateDisp(y)
+  et <- exactTest(y)
+  results <- as.data.frame(topTags(et, n = nrow(et))) %>%
+    select(logFC, logCPM, PValue)
+    return(results)
 }
 
  #### limma ####
@@ -101,7 +122,17 @@ run_edger <- function(count_dataframe, group) {
 #' 
 #' @examples run_limma(counts_df, design, voom=TRUE)
 run_limma <- function(counts_dataframe, design, group) {
-    return(NULL)
+  
+  dge <- DGEList(counts=counts_dataframe)
+  keep <- filterByExpr(dge, design)
+  dge <- dge[keep,,keep.lib.sizes=FALSE]
+  dge <- calcNormFactors(dge)
+  logCPM <- cpm(dge, log=TRUE, prior.count=3)
+  vfit2 <- voomLmFit(dge, design=design, sample.weights=TRUE)
+  vfit2 <- eBayes(vfit2)
+  results <- topTable(vfit2, coef=2, number=nrow(dge), sort.by="p")
+  
+    return(results)
 }
 
 #### ggplot ####
