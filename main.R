@@ -164,7 +164,14 @@ run_limma <- function(counts_dataframe, design, group) {
 #' 2 deseq   9.97e-261
 #' 3 deseq   1.16e-206
 combine_pval <- function(deseq, edger, limma) {
-    return(NULL)
+  wide <- data.frame(
+    deseq = deseq$pvalue,
+    edger = edger$PValue,
+    limma = limma$P.Value
+  )
+  
+  gathered <- gather(wide, key = "package", value = "pval")
+  return(gathered)
 }
 
 #' Create three separate facets for each of the diff. exp. pacakges.
@@ -188,7 +195,12 @@ combine_pval <- function(deseq, edger, limma) {
 #' 1  -9.84 2.23e-180 edgeR  
 #' 2   6.18 5.87e-179 edgeR  
 create_facets <- function(deseq, edger, limma) {
-    return(NULL)
+  edger_df <- data.frame(logFC = edger$logFC, padj = edger$PValue, package = "edgeR")
+  deseq_df <- data.frame(logFC = deseq$log2FoldChange, padj = deseq$padj, package = "deseq")
+  limma_df <- data.frame(logFC = limma$logFC, padj = limma$adj.P.Val, package = "limma")
+  
+  result <- rbind(edger_df, deseq_df, limma_df)
+  return(result)
 }
 
 #' Create an attractive volcano plot of three diff. exp. packages' data.
@@ -218,6 +230,23 @@ create_facets <- function(deseq, edger, limma) {
 #'
 #' @examples p <- theme_plot(volcano)
 theme_plot <- function(volcano_data) {
-    return(NULL)
+  p <- ggplot(volcano_data, aes(x = logFC, y = -log10(padj), color = package)) +
+    geom_point(alpha = 0.4, size = 1.2) +
+    facet_wrap(~ package) +
+    scale_color_manual(values = c("edgeR" = "#E63946", "deseq" = "#457B9D", "limma" = "#2A9D8F")) +
+    labs(
+      title = "Volcano Plot of Differential Expression Results",
+      x = "Log2 Fold Change",
+      y = "-log10(adjusted p-value)"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+      strip.background = element_rect(fill = "#f0f0f0"),
+      strip.text = element_text(face = "bold"),
+      legend.position = "none",
+      panel.grid.minor = element_blank()
+    )
+  return(p)
 }
 

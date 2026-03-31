@@ -1,8 +1,10 @@
 ---
 title: "Assignment 6 Report"
-author: "Taylor Falk"
+author: "Hannah Owen"
 date: "1/24/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 # Comparison of Three Differential Expression Packages
